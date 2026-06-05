@@ -1,7 +1,7 @@
 # willcodefortea.com
 
 Personal site of Ben Emery. Built with [Astro](https://astro.build), styled
-with Tailwind CSS, deployed to Cloudflare Pages.
+with Tailwind CSS, served by Cloudflare Workers (Static Assets).
 
 ## Local development
 
