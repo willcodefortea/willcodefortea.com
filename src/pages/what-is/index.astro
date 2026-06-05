@@ -1,0 +1,69 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SiteHeader from '~/components/SiteHeader.astro';
+import SiteFooter from '~/components/SiteFooter.astro';
+import PostCard from '~/components/PostCard.astro';
+import { dateFromEntry } from '~/content.config';
+
+const entries = await getCollection('what_is');
+const posts = entries
+  .map((entry) => ({
+    entry,
+    date: entry.data.date ?? dateFromEntry(entry),
+  }))
+  .sort((a, b) => {
+    const aDate = a.date?.valueOf() ?? 0;
+    const bDate = b.date?.valueOf() ?? 0;
+    return bDate - aDate;
+  });
+
+const starred = posts.filter((p) => p.entry.data.starred);
+const rest = posts.filter((p) => !p.entry.data.starred);
+---
+<BaseLayout
+  title="What is…"
+  description="A growing collection of explainers on engineering, architecture, and algorithms."
+>
+  <SiteHeader />
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <header class="mb-6">
+      <h1 class="!mt-0">What is…</h1>
+      <p style="color: var(--color-fg-muted);">
+        A growing collection of explainers on engineering, architecture, and algorithms.
+      </p>
+    </header>
+
+    {starred.length > 0 && (
+      <section class="mb-8">
+        <h2 class="text-sm uppercase tracking-wider !border-b-0" style="color: var(--color-fg-muted);">
+          Starred
+        </h2>
+        {starred.map(({ entry, date }) => (
+          <PostCard
+            href={`/what-is/${entry.id}/`}
+            title={entry.data.title}
+            date={date}
+            excerpt={entry.data.excerpt}
+            starred
+          />
+        ))}
+      </section>
+    )}
+
+    <section>
+      <h2 class="text-sm uppercase tracking-wider !border-b-0" style="color: var(--color-fg-muted);">
+        All posts
+      </h2>
+      {rest.map(({ entry, date }) => (
+        <PostCard
+          href={`/what-is/${entry.id}/`}
+          title={entry.data.title}
+          date={date}
+          excerpt={entry.data.excerpt}
+        />
+      ))}
+    </section>
+  </main>
+  <SiteFooter />
+</BaseLayout>

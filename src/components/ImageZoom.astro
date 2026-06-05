@@ -1,0 +1,11 @@
+---
+// Mounts medium-zoom against all images inside `.prose figure` on the page.
+// Included once by PostLayout — no per-post wiring needed.
+---
+<script>
+  import mediumZoom from 'medium-zoom';
+  mediumZoom('.prose figure img', {
+    background: 'rgba(26, 26, 26, 0.95)',
+    margin: 24,
+  });
+</script>

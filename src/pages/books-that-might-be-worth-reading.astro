@@ -1,0 +1,72 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SiteHeader from '~/components/SiteHeader.astro';
+import SiteFooter from '~/components/SiteFooter.astro';
+import BookGallery from '~/components/BookGallery.astro';
+
+const books = [
+  { src: '/assets/images/books/dare-to-lead.jpeg', title: 'Brené Brown — Dare to Lead' },
+  { src: '/assets/images/books/start-with-why.jpeg', title: 'Simon Sinek — Start with Why' },
+  { src: '/assets/images/books/outliers.jpeg', title: 'Malcom Gladwell — Outliers' },
+  { src: '/assets/images/books/art-of-war.jpeg', title: 'Sun Tzu — Art of War' },
+  { src: '/assets/images/books/thinking-fast-and-slow.jpg', title: 'Daniel Kahneman — Thinking, Fast and Slow' },
+  { src: '/assets/images/books/team-topologies.jpeg', title: 'Matthew Skelton and Manuel Pais — Team Topologies' },
+  { src: '/assets/images/books/radical-candor.jpeg', title: 'Kim Scott — Radical Candor' },
+  { src: '/assets/images/books/machine-that-changed-the-world.jpeg', title: 'James P. Womack — The Machine that Changed the World' },
+  { src: '/assets/images/books/mythical-man-month.jpeg', title: 'Frederick Brooks Jr. — Mythical Man Month' },
+  { src: '/assets/images/books/lean-startup.jpeg', title: 'Eric Ries — The Lean Startup' },
+  { src: '/assets/images/books/five-dysfunctions-of-a-team.jpeg', title: 'Patrick Lencioni — The Five Dysfunctions of a Team' },
+  { src: '/assets/images/books/peopleware.jpeg', title: 'Tom DeMarco, Timothy Lister — Peopleware' },
+  { src: '/assets/images/books/thanks-for-the-feedback.jpeg', title: 'Douglas Stone, Sheila Heen — Thanks for the Feedback' },
+  { src: '/assets/images/books/an-elegant-puzzle.jpeg', title: 'Will Larson — An Elegant Puzzle' },
+  { src: '/assets/images/books/accelerate.jpeg', title: 'Nicole Forsgren PhD, Jez Humble, Gene Kim — Accelerate' },
+  { src: '/assets/images/books/thinking-in-systems.jpeg', title: 'Donella H. Meadows — Thinking in Systems: A Primer' },
+  { src: '/assets/images/books/the-hard-thing-about-hard-things.jpeg', title: 'Ben Horowitz — The Hard Thing About Hard Things' },
+  { src: '/assets/images/books/drive.jpeg', title: 'Daniel H. Pink — Drive: The Surprising Truth About What Motivates Us' },
+  { src: '/assets/images/books/managers-path.jpeg', title: 'Camille Fournier — The Manager’s Path' },
+  { src: '/assets/images/books/high-output-management.jpeg', title: 'Andrew S. Grove — High Output Management' },
+  { src: '/assets/images/books/invent-and-wander.jpeg', title: 'Jeff Bezos — Invent and Wander' },
+];
+---
+<BaseLayout title="Books That Might be Worth Reading" description="A reading list for engineering management and leadership.">
+  <SiteHeader />
+  <main class="mx-auto max-w-4xl px-4 py-10">
+    <article class="prose">
+      <h1 class="!mt-0">Books That Might be Worth Reading</h1>
+
+      <p>
+        Below is a list of books (in no particular order, perhaps I should add some? Maybe some
+        categories and write ups? hm.) that might be useful to people who are interested in
+        management. YMMV.
+      </p>
+    </article>
+
+    <div class="my-8">
+      <BookGallery books={books} />
+    </div>
+
+    <article class="prose">
+      <h2>The backlog</h2>
+      <ul>
+        <li>Zen and the Art of Motorcycle Maintenance</li>
+        <li>The Courage to Be Disliked</li>
+        <li>SAP Nation</li>
+        <li>Behind the Cloud</li>
+        <li>User Story Mapping</li>
+        <li>Nudge</li>
+        <li>The Founder's Dilemmas: Anticipating and Avoiding the Pitfalls That Can Sink a Startup</li>
+      </ul>
+
+      <h2>Other resources</h2>
+      <ul>
+        <li><a href="https://leaddev.com/">LeadDev</a></li>
+        <li>
+          <a href="https://blog.pragmaticengineer.com/holiday-tech-book-recommendations/">
+            Gergely Orosz's list of holiday tech books
+          </a> (There's a lot here, maybe I should just redirect?)
+        </li>
+      </ul>
+    </article>
+  </main>
+  <SiteFooter />
+</BaseLayout>

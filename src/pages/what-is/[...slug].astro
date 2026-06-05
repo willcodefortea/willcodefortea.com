@@ -1,0 +1,26 @@
+---
+import { getCollection, render } from 'astro:content';
+import PostLayout from '~/layouts/PostLayout.astro';
+import { dateFromEntry } from '~/content.config';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('what_is');
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const date = entry.data.date ?? dateFromEntry(entry);
+---
+<PostLayout
+  title={entry.data.title}
+  date={date}
+  excerpt={entry.data.excerpt}
+  overlayImage={entry.data.header?.overlay_image}
+  overlayFilter={entry.data.header?.overlay_filter}
+>
+  <Content />
+</PostLayout>
