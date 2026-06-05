@@ -1,0 +1,711 @@
+---
+title:  "Dependency Injection vs Inversion of Control"
+categories: what-is
+
+header:
+  overlay_image: /assets/images/what-is/di-vs-ioc/control-flow.png
+  overlay_filter: 0.6
+excerpt: tldr; Inversion of Control (IoC) is a design principle where control flow is inverted - the framework calls you. Dependency Injection (DI) is a specific implementation of IoC where dependencies are provided to objects rather than objects creating them. DI is a subset of IoC.
+---
+import Figure from '~/components/Figure.astro';
+
+
+The terms "Inversion of Control" and "Dependency Injection" are often used interchangeably, but they're not quite the same thing. Understanding the difference is important for writing clean, testable, and maintainable code. Let's break down what each means and how they relate to each other.
+
+## Inversion of Control (IoC)
+
+Inversion of Control is a broad design principle where the control flow of a program is inverted compared to traditional procedural programming. Instead of your code calling library functions, the framework calls your code.
+
+Think about it this way: in traditional programming, **you** control the flow. You call functions when you need them. With IoC, the framework controls the flow and calls your code when it needs to.
+
+### A simple example without IoC
+
+```python
+class DataProcessor:
+    def process(self, data: str) -> str:
+        # Clean the data
+        cleaned = data.strip().lower()
+
+        # Transform it
+        transformed = cleaned.replace(" ", "_")
+
+        # Validate it
+        if len(transformed) < 3:
+            raise ValueError("Data too short")
+
+        return transformed
+
+# Traditional control flow - we call everything
+def main():
+    processor = DataProcessor()
+    result = processor.process("  Hello World  ")
+    print(result)
+
+if __name__ == "__main__":
+    main()
+```
+
+In this example, we control everything. We instantiate the processor, we call the method, we decide when things happen.
+
+### The same example with IoC
+
+```python
+from abc import ABC, abstractmethod
+from typing import Callable
+
+
+class DataProcessor(ABC):
+    @abstractmethod
+    def process(self, data: str) -> str:
+        pass
+
+
+class SimpleProcessor(DataProcessor):
+    def process(self, data: str) -> str:
+        cleaned = data.strip().lower()
+        transformed = cleaned.replace(" ", "_")
+
+        if len(transformed) < 3:
+            raise ValueError("Data too short")
+
+        return transformed
+
+
+class ProcessingFramework:
+    """This framework controls the flow - it calls us, not the other way around"""
+
+    def __init__(self):
+        self._processors: list[DataProcessor] = []
+        self._hooks: dict[str, list[Callable]] = {
+            "before_process": [],
+            "after_process": [],
+        }
+
+    def register_processor(self, processor: DataProcessor) -> None:
+        self._processors.append(processor)
+
+    def register_hook(self, event: str, callback: Callable) -> None:
+        if event in self._hooks:
+            self._hooks[event].append(callback)
+
+    def run(self, data: str) -> list[str]:
+        results = []
+
+        # Framework controls when hooks are called
+        for hook in self._hooks["before_process"]:
+            hook(data)
+
+        # Framework controls when processors are called
+        for processor in self._processors:
+            result = processor.process(data)
+            results.append(result)
+
+        # Framework controls when hooks are called
+        for hook in self._hooks["after_process"]:
+            hook(results)
+
+        return results
+
+
+# Now we just configure the framework and let it control the flow
+def log_processing(data: str) -> None:
+    print(f"About to process: {data}")
+
+
+def log_results(results: list[str]) -> None:
+    print(f"Finished processing, got {len(results)} results")
+
+
+def main():
+    framework = ProcessingFramework()
+
+    # Register our processor - the framework will call it
+    framework.register_processor(SimpleProcessor())
+
+    # Register hooks - the framework will call these too
+    framework.register_hook("before_process", log_processing)
+    framework.register_hook("after_process", log_results)
+
+    # We just call run() - the framework takes over from here
+    results = framework.run("  Hello World  ")
+
+if __name__ == "__main__":
+    main()
+```
+
+Notice the key difference? In the IoC version, we don't control **when** our code runs. We register our components with the framework, and the framework decides when to call them. This is the "inversion" - control has been inverted from our code to the framework.
+
+This pattern is everywhere in modern frameworks:
+- Django views are called by Django when a request matches a URL
+- Flask route handlers are called by Flask
+- React component lifecycle methods are called by React
+- Event listeners in JavaScript are called by the browser
+
+## Dependency Injection (DI)
+
+Dependency Injection is a **specific implementation** of the IoC principle. It focuses on how objects obtain their dependencies. Instead of objects creating their own dependencies (or using singletons/globals), dependencies are "injected" from the outside.
+
+### Without Dependency Injection
+
+```python
+import psycopg2
+
+
+class PostgresUserRepository:
+    def __init__(self):
+        # Creating our own dependencies - tight coupling!
+        self.connection = psycopg2.connect(
+            host="localhost",
+            database="myapp",
+            user="admin",
+            password="secret123"
+        )
+
+    def get_user(self, user_id: int) -> dict:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        return cursor.fetchone()
+
+
+class UserService:
+    def __init__(self):
+        # Creating our own repository - tight coupling!
+        self.repository = PostgresUserRepository()
+
+    def get_user_email(self, user_id: int) -> str:
+        user = self.repository.get_user(user_id)
+        return user["email"]
+
+
+# Using the service
+service = UserService()
+email = service.get_user_email(42)
+```
+
+What's wrong with this? Several things:
+
+1. **Testing is hard** - How do you test `UserService` without a real database?
+2. **Tight coupling** - `UserService` is tied to `PostgresUserRepository`. Want to switch to MongoDB? Good luck.
+3. **Configuration is inflexible** - The database connection details are hardcoded
+4. **Reusability is limited** - Can't reuse `UserService` with different repository implementations
+
+### With Dependency Injection
+
+```python
+from abc import ABC, abstractmethod
+from typing import Protocol
+
+
+class UserRepository(Protocol):
+    """Protocol defines the interface - dependency inversion principle at work!"""
+    def get_user(self, user_id: int) -> dict:
+        ...
+
+
+class PostgresUserRepository:
+    def __init__(self, connection):
+        # Dependency is injected!
+        self.connection = connection
+
+    def get_user(self, user_id: int) -> dict:
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        return cursor.fetchone()
+
+
+class InMemoryUserRepository:
+    """Alternative implementation for testing"""
+    def __init__(self):
+        self.users = {
+            42: {"id": 42, "email": "test@example.com", "name": "Test User"}
+        }
+
+    def get_user(self, user_id: int) -> dict:
+        return self.users.get(user_id)
+
+
+class UserService:
+    def __init__(self, repository: UserRepository):
+        # Dependency is injected!
+        self.repository = repository
+
+    def get_user_email(self, user_id: int) -> str:
+        user = self.repository.get_user(user_id)
+        return user["email"]
+
+
+# Production usage
+import psycopg2
+
+connection = psycopg2.connect(
+    host="localhost",
+    database="myapp",
+    user="admin",
+    password="secret123"
+)
+repo = PostgresUserRepository(connection)
+service = UserService(repo)
+email = service.get_user_email(42)
+
+# Testing usage
+def test_user_service():
+    # Easy to test with a fake repository!
+    fake_repo = InMemoryUserRepository()
+    service = UserService(fake_repo)
+
+    email = service.get_user_email(42)
+    assert email == "test@example.com"
+```
+
+Much better! Now:
+
+1. **Testing is easy** - Just inject a fake repository
+2. **Loose coupling** - `UserService` works with any repository that matches the protocol
+3. **Flexible configuration** - Database details are configured externally
+4. **Highly reusable** - Same service works with different implementations
+
+## Three Types of Dependency Injection
+
+There are three main ways to inject dependencies in Python:
+
+### 1. Constructor Injection (most common)
+
+```python
+class EmailService:
+    def __init__(self, smtp_client):
+        self.smtp_client = smtp_client
+
+    def send_email(self, to: str, subject: str, body: str):
+        self.smtp_client.send(to, subject, body)
+```
+
+This is the most common and generally preferred approach. Dependencies are provided when the object is created.
+
+### 2. Property/Setter Injection
+
+```python
+class EmailService:
+    def __init__(self):
+        self.smtp_client = None
+
+    def set_smtp_client(self, client):
+        self.smtp_client = client
+
+    def send_email(self, to: str, subject: str, body: str):
+        if self.smtp_client is None:
+            raise RuntimeError("SMTP client not configured")
+        self.smtp_client.send(to, subject, body)
+```
+
+Less common in Python, but useful when dependencies are optional or can change during the object's lifetime.
+
+### 3. Method Injection
+
+```python
+class EmailService:
+    def send_email(self, smtp_client, to: str, subject: str, body: str):
+        smtp_client.send(to, subject, body)
+```
+
+Used when the dependency is only needed for a single method call, or when different calls might use different dependencies.
+
+## Putting It All Together
+
+Here's a more complete example that shows both IoC and DI working together:
+
+```python
+from abc import ABC, abstractmethod
+from typing import Protocol
+import json
+
+
+# Protocols define our abstractions
+class DataStore(Protocol):
+    def save(self, key: str, data: dict) -> None:
+        ...
+
+    def load(self, key: str) -> dict:
+        ...
+
+
+class NotificationService(Protocol):
+    def notify(self, message: str) -> None:
+        ...
+
+
+# Concrete implementations
+class FileDataStore:
+    def __init__(self, base_path: str):
+        self.base_path = base_path
+
+    def save(self, key: str, data: dict) -> None:
+        with open(f"{self.base_path}/{key}.json", "w") as f:
+            json.dump(data, f)
+
+    def load(self, key: str) -> dict:
+        with open(f"{self.base_path}/{key}.json", "r") as f:
+            return json.load(f)
+
+
+class ConsoleNotificationService:
+    def notify(self, message: str) -> None:
+        print(f"NOTIFICATION: {message}")
+
+
+# Plugin system using IoC
+class PluginBase(ABC):
+    @abstractmethod
+    def execute(self, context: dict) -> dict:
+        pass
+
+
+class DataProcessingPlugin(PluginBase):
+    def __init__(self, data_store: DataStore, notifier: NotificationService):
+        # Dependencies injected via constructor
+        self.data_store = data_store
+        self.notifier = notifier
+
+    def execute(self, context: dict) -> dict:
+        user_id = context["user_id"]
+
+        # Load existing data
+        try:
+            existing = self.data_store.load(f"user_{user_id}")
+        except FileNotFoundError:
+            existing = {}
+
+        # Process and merge
+        processed = {**existing, **context["data"]}
+
+        # Save results
+        self.data_store.save(f"user_{user_id}", processed)
+
+        # Notify
+        self.notifier.notify(f"Processed data for user {user_id}")
+
+        return processed
+
+
+class Application:
+    """Framework that controls the flow (IoC)"""
+
+    def __init__(self):
+        self.plugins: list[PluginBase] = []
+
+    def register_plugin(self, plugin: PluginBase) -> None:
+        self.plugins.append(plugin)
+
+    def run(self, context: dict) -> None:
+        print("Application starting...")
+
+        # Framework controls when plugins execute
+        for plugin in self.plugins:
+            result = plugin.execute(context)
+            print(f"Plugin {plugin.__class__.__name__} completed")
+
+        print("Application finished")
+
+
+def main():
+    # Set up dependencies (DI)
+    data_store = FileDataStore("/tmp/myapp")
+    notifier = ConsoleNotificationService()
+
+    # Create plugin with injected dependencies (DI)
+    plugin = DataProcessingPlugin(data_store, notifier)
+
+    # Create application framework (IoC)
+    app = Application()
+    app.register_plugin(plugin)
+
+    # Let the framework take control (IoC)
+    app.run({
+        "user_id": 123,
+        "data": {"name": "Alice", "email": "alice@example.com"}
+    })
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Service Locator: The Imposter Pattern
+
+Before we discuss how IoC and DI relate, let's address a common pattern that's often confused with Dependency Injection: the **Service Locator** pattern.
+
+### What is Service Locator?
+
+Service Locator is when you pass a container to a function or class, and that code "pulls" dependencies from the container when it needs them. It looks like this:
+
+```python
+class ServiceContainer:
+    """A container that holds all our services"""
+
+    def __init__(self):
+        self._services = {}
+
+    def register(self, name: str, service):
+        self._services[name] = service
+
+    def get(self, name: str):
+        if name not in self._services:
+            raise KeyError(f"Service '{name}' not found")
+        return self._services[name]
+
+
+class OrderProcessor:
+    def __init__(self, container: ServiceContainer):
+        # We receive the container, not the dependencies!
+        self.container = container
+
+    def process_order(self, order_id: int):
+        # Pull dependencies from the container as needed
+        repository = self.container.get("order_repository")
+        email_service = self.container.get("email_service")
+        payment_service = self.container.get("payment_service")
+
+        order = repository.get_order(order_id)
+        payment_service.charge(order.total)
+        email_service.send_confirmation(order.customer_email)
+
+
+# Setup
+container = ServiceContainer()
+container.register("order_repository", OrderRepository())
+container.register("email_service", EmailService())
+container.register("payment_service", PaymentService())
+
+# Usage
+processor = OrderProcessor(container)
+processor.process_order(123)
+```
+
+### Why Service Locator is Problematic
+
+While this might look convenient, it's widely considered an **anti-pattern** for several reasons:
+
+1. **Hidden dependencies** - You can't tell what dependencies `OrderProcessor` needs just by looking at its constructor. You have to read through all the code to find the `container.get()` calls.
+
+   ```python
+   # Service Locator - unclear dependencies
+   processor = OrderProcessor(container)  # What does this need? Who knows!
+
+   # True DI - crystal clear dependencies
+   processor = OrderProcessor(repo, email, payment)  # Ah, it needs these three things!
+   ```
+
+2. **Runtime failures** - If you forget to register a service, you won't know until runtime when the code tries to get it from the container.
+
+   ```python
+   container = ServiceContainer()
+   container.register("order_repository", OrderRepository())
+   # Oops! Forgot to register email_service
+
+   processor = OrderProcessor(container)
+   processor.process_order(123)  # BOOM! KeyError at runtime
+   ```
+
+3. **Harder to test** - You still need to mock the container and set up all the services, even if the test only cares about one dependency.
+
+   ```python
+   def test_order_processing():
+       # Have to set up the entire container
+       container = ServiceContainer()
+       container.register("order_repository", FakeOrderRepository())
+       container.register("email_service", FakeEmailService())
+       container.register("payment_service", FakePaymentService())
+
+       processor = OrderProcessor(container)
+       # Now we can test...
+   ```
+
+4. **Tight coupling to the container** - Your code is coupled to the specific container implementation. Every class needs to know about the container.
+
+### Service Locator as a God Object
+
+The Service Locator pattern often leads to creating a **God Object** (also called God Class) - an anti-pattern where a single object knows about or does too much. The container becomes an all-knowing registry that every part of your application depends on.
+
+```python
+# The container becomes a god object - it knows about EVERYTHING
+container = ServiceContainer()
+container.register("database", Database())
+container.register("cache", RedisCache())
+container.register("logger", Logger())
+container.register("email", EmailService())
+container.register("payment", StripePayment())
+container.register("auth", AuthService())
+container.register("config", Config())
+# ... and 50 more services
+
+# Now every class in your app depends on this god object
+class OrderProcessor:
+    def __init__(self, container):
+        self.container = container  # Depends on god object
+
+class UserService:
+    def __init__(self, container):
+        self.container = container  # Depends on god object
+
+class PaymentProcessor:
+    def __init__(self, container):
+        self.container = container  # Depends on god object
+```
+
+This violates the **Single Responsibility Principle** - the container is responsible for knowing about every service in your system. It also creates a **single point of failure** - if the container is misconfigured, everything breaks.
+
+With proper Dependency Injection, there is no god object. Each class only knows about the specific dependencies it needs, nothing more.
+
+### The Right Way: Dependency Injection
+
+Compare this to proper Dependency Injection:
+
+```python
+class OrderProcessor:
+    def __init__(
+        self,
+        repository: OrderRepository,
+        email_service: EmailService,
+        payment_service: PaymentService
+    ):
+        # Dependencies are explicit and injected!
+        self.repository = repository
+        self.email_service = email_service
+        self.payment_service = payment_service
+
+    def process_order(self, order_id: int):
+        order = self.repository.get_order(order_id)
+        self.payment_service.charge(order.total)
+        self.email_service.send_confirmation(order.customer_email)
+
+
+# Setup (yes, this is more verbose at the composition root)
+repository = OrderRepository()
+email_service = EmailService()
+payment_service = PaymentService()
+
+processor = OrderProcessor(repository, email_service, payment_service)
+processor.process_order(123)
+```
+
+Benefits:
+
+1. **Explicit dependencies** - You know exactly what `OrderProcessor` needs
+2. **Compile-time safety** - Type checkers can verify you're passing the right things
+3. **Easy to test** - Just pass in test doubles for what you're testing
+4. **No coupling to infrastructure** - `OrderProcessor` has no idea about containers
+
+### When Service Locator Might Be Acceptable
+
+There are rare cases where Service Locator makes sense:
+
+- **Legacy code migration** - Transitioning from global state to DI
+- **Plugin systems** - Where plugins need to discover available services dynamically
+- **Framework internals** - Some frameworks use it internally (but don't expose it to your code)
+
+But in general, prefer explicit Dependency Injection over Service Locator.
+
+### DI Containers vs Service Locator
+
+It's important to note that using a **DI Container** (like `dependency-injector`, `injector`, or `punq` in Python) is **not** the same as Service Locator, as long as you use it correctly:
+
+```python
+from dependency_injector import containers, providers
+
+class Container(containers.DeclarativeContainer):
+    order_repository = providers.Singleton(OrderRepository)
+    email_service = providers.Singleton(EmailService)
+    payment_service = providers.Singleton(PaymentService)
+
+    # Container wires up dependencies automatically
+    order_processor = providers.Factory(
+        OrderProcessor,
+        repository=order_repository,
+        email_service=email_service,
+        payment_service=payment_service,
+    )
+
+
+# The container is only used at the composition root
+container = Container()
+
+# OrderProcessor receives its dependencies, not the container!
+processor = container.order_processor()
+processor.process_order(123)
+```
+
+The key difference: **the container injects dependencies into objects; objects don't pull from the container**.
+
+<Figure src="/assets/images/what-is/di-vs-ioc/comparison.svg" alt="Visual comparison of Service Locator vs Dependency Injection patterns." caption="Service Locator (left) has the object pulling dependencies from a container, creating hidden dependencies and tight coupling. Dependency Injection (right) has dependencies explicitly injected into the object, making dependencies clear and testable." />
+
+## The Relationship
+
+So how do IoC and DI relate?
+
+- **Inversion of Control** is the broad principle: "Don't call us, we'll call you"
+- **Dependency Injection** is a specific technique for achieving IoC by injecting dependencies
+- **Service Locator** is a pattern that looks like DI but is actually an anti-pattern
+
+DI is a form of IoC, but not all IoC is DI. Other forms of IoC include:
+- Event-driven programming
+- Template method pattern
+- Strategy pattern
+- Plugin architectures
+
+## Why Does This Matter?
+
+Following these principles leads to:
+
+1. **Testable code** - You can inject test doubles instead of real dependencies
+2. **Flexible code** - Swap implementations without changing dependent code
+3. **Maintainable code** - Each component has clear responsibilities and dependencies
+4. **Reusable code** - Components can work in different contexts
+
+The key insight is that **high-level code shouldn't depend on low-level details**. Both should depend on abstractions. That's the essence of both IoC and DI.
+
+## Real-World Python Example: Flask
+
+Flask is a great example of IoC in action:
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hello, World!"
+
+# We don't call home() ourselves
+# Flask's framework calls it when a request arrives
+# That's IoC!
+```
+
+And here's how you might use DI with Flask:
+
+```python
+from flask import Flask
+
+class UserService:
+    def __init__(self, repository):
+        self.repository = repository
+
+    def get_user(self, user_id):
+        return self.repository.get_user(user_id)
+
+# Create dependencies
+from myapp.repositories import PostgresUserRepository
+repository = PostgresUserRepository(connection_string="...")
+user_service = UserService(repository)  # DI!
+
+app = Flask(__name__)
+
+@app.route("/users/<int:user_id>")
+def get_user(user_id):
+    # IoC: Flask calls this function
+    # DI: We use the injected service
+    user = user_service.get_user(user_id)
+    return {"user": user}
+```
+
+Simple, testable, and maintainable. That's the power of understanding these principles.
+

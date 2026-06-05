@@ -1,0 +1,29 @@
+---
+interface Props {
+  title: string;
+  date?: string;
+  image: string;
+  filter?: string | number;
+}
+const { title, date, image, filter } = Astro.props;
+
+let opacity = 0.5;
+if (typeof filter === 'number') opacity = filter;
+else if (typeof filter === 'string') {
+  const parsed = Number.parseFloat(filter);
+  if (!Number.isNaN(parsed)) opacity = parsed;
+}
+const overlayStyle = `background-image: url('${image}');`;
+const filterStyle = `background-color: rgba(0, 0, 0, ${opacity});`;
+---
+<section
+  class="relative w-full bg-cover bg-center"
+  style={`${overlayStyle} min-height: 320px;`}
+  aria-label="Post header image"
+>
+  <div class="absolute inset-0" style={filterStyle}></div>
+  <div class="relative mx-auto flex max-w-3xl flex-col justify-end px-4 py-16" style="min-height: 320px;">
+    <h1 class="!mt-0 text-white drop-shadow-md">{title}</h1>
+    {date && <p class="text-sm text-white/80">{date}</p>}
+  </div>
+</section>

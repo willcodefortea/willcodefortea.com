@@ -1,0 +1,29 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  date?: Date;
+  excerpt?: string;
+  starred?: boolean;
+}
+const { href, title, date, excerpt, starred } = Astro.props;
+const formattedDate = date
+  ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(date)
+  : undefined;
+---
+<article class="border-b py-6 transition-colors" style="border-color: var(--color-border);">
+  <header class="mb-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h2 class="!my-0 !border-b-0 !pb-0 text-xl">
+      <a href={href}>
+        {title}
+        {starred && <span aria-label="Starred" title="Starred" style="color: var(--color-accent);">★</span>}
+      </a>
+    </h2>
+    {formattedDate && (
+      <time class="text-sm" style="color: var(--color-fg-muted);">{formattedDate}</time>
+    )}
+  </header>
+  {excerpt && (
+    <p class="!my-0 text-sm" style="color: var(--color-fg-muted);">{excerpt}</p>
+  )}
+</article>

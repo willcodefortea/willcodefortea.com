@@ -1,0 +1,77 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import SiteHeader from '~/components/SiteHeader.astro';
+import SiteFooter from '~/components/SiteFooter.astro';
+---
+<BaseLayout title="About" description="Ben Emery — software engineer, manager, and writer of willcodefortea.">
+  <SiteHeader />
+  <main class="mx-auto max-w-3xl px-4 py-10">
+    <article class="prose">
+      <div class="float-right ml-6 mb-4 hidden sm:block">
+        <img
+          src="https://www.gravatar.com/avatar/f279406cab853bc537210949263d69d9?size=300"
+          alt="Ben Emery"
+          width="200"
+          height="200"
+          class="rounded-lg"
+        />
+      </div>
+
+      <h1 class="!mt-0">Hello,</h1>
+
+      <p>
+        I'm Ben (also <em>willcodefortea</em>). I write code and take pictures, sometimes things appear here.
+      </p>
+
+      <p>
+        I got into programming at university while I was studying physics. The elegance of theories,
+        their derivations and implications fascinated me from an early age, but I never found an
+        area I really loved. I found ones I hated sure, (looking at you cosmology), but none that I
+        wanted to study further. When we had to do some modelling in C however, I discovered that
+        that same elegance could be found here. For me, programming is all about that elegance, and
+        the puzzle hidden in the noise. Oh people would <em>pay you</em> to do them?!
+      </p>
+
+      <p>Count. Me. In.</p>
+
+      <p>
+        I've been working in startups for around 10 years, primarily with Python and Typescript.
+        I've been on the Engineering Manager track for a few of those and had to switch up my
+        skillset. <a href="/books-that-might-be-worth-reading/">Here's a list</a> of ever growing
+        books that helped me out.
+      </p>
+
+      <p>You can find me in all the usual places :)</p>
+
+      <p class="flex justify-evenly gap-8 text-2xl">
+        <a href="https://www.github.com/willcodefortea" target="_blank" rel="noopener" aria-label="GitHub">
+          GitHub
+        </a>
+        <a href="https://www.linkedin.com/in/ben-emery-willcodefortea/" target="_blank" rel="noopener" aria-label="LinkedIn">
+          LinkedIn
+        </a>
+      </p>
+
+      <h2>Technologies I'm looking to learn in 2023</h2>
+      <ul>
+        <li>Build a compiler</li>
+        <li>Professional AWS Solutions Architect (THIS TIME)</li>
+        <li>TrueLayer</li>
+        <li>Rust</li>
+        <li>Cloudflare Workers</li>
+        <li>[More things as I think of them]</li>
+      </ul>
+
+      <h2>Technologies I'm looking to learn in 2022</h2>
+      <ul>
+        <li>GitHub actions ✅<ul><li>Extremely useful and very easy to create CI/CD pipelines</li></ul></li>
+        <li>Smart Contracts<ul><li>Massively lost interest in all things blockchain. The philosophy is great, the reality less so.</li></ul></li>
+        <li>Haskell (finally.)<ul><li>Still not spent time with this, but have leaned into partially-functional approaches in my day to day programming</li></ul></li>
+        <li>Terraform ✅<ul><li>plan + apply with state &gt; cloudformation</li></ul></li>
+        <li>CDK ✅<ul><li>It's fine, but the notion of an imperative language to manage infrastructure gives me the heebie jeebies</li></ul></li>
+        <li>Professional AWS Solutions Architect<ul><li>I've been wanting to tick this box for a few years... Maybe next year.</li></ul></li>
+      </ul>
+    </article>
+  </main>
+  <SiteFooter />
+</BaseLayout>

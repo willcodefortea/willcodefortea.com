@@ -1,0 +1,27 @@
+---
+const items = [
+  { label: 'What is…', href: '/what-is/' },
+  { label: 'Books', href: '/books-that-might-be-worth-reading/' },
+  { label: 'About', href: '/about/' },
+];
+const path = Astro.url.pathname;
+---
+<header class="border-b" style="border-color: var(--color-border);">
+  <div class="mx-auto flex max-w-5xl items-center justify-between gap-6 px-4 py-4">
+    <a href="/" class="font-mono text-base font-semibold" style="color: var(--color-fg);">
+      willcodefortea
+    </a>
+    <nav class="flex gap-5 text-sm">
+      {items.map((item) => (
+        <a
+          href={item.href}
+          aria-current={path.startsWith(item.href) ? 'page' : undefined}
+          class="transition-colors"
+          style={path.startsWith(item.href) ? 'color: var(--color-accent);' : 'color: var(--color-fg-muted);'}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  </div>
+</header>

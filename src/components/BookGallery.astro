@@ -1,0 +1,30 @@
+---
+interface Book {
+  src: string;
+  title: string;
+}
+
+interface Props {
+  books: Book[];
+}
+
+const { books } = Astro.props;
+---
+<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+  {books.map((book) => (
+    <a
+      href={book.src}
+      target="_blank"
+      rel="noopener"
+      title={book.title}
+      class="block transition-transform hover:scale-105"
+    >
+      <img
+        src={book.src}
+        alt={book.title}
+        loading="lazy"
+        class="h-auto w-full rounded shadow-md"
+      />
+    </a>
+  ))}
+</div>

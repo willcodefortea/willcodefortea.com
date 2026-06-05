@@ -1,7 +1,8 @@
-_site
-.sass-cache
-.jekyll-cache
-.jekyll-metadata
-vendor
-.DS_STORE
+# Astro
+dist/
+.astro/
+node_modules/
+
+# OS / editor
+.DS_Store
 .vscode
